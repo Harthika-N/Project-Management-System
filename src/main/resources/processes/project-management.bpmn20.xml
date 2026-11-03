@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+    xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:flowable="http://flowable.org/bpmn"
+    targetNamespace="http://www.example.com/project-management">
+
+    <process id="projectManagementProcess"
+             name="Project Management Workflow"
+             isExecutable="true">
+
+        <!-- Start -->
+        <startEvent id="startProject" name="Start Project"/>
+        
+        <sequenceFlow id="flow1"
+                      sourceRef="startProject"
+                      targetRef="managerReview"/>
+
+        <!-- Project Manager Review -->
+        <userTask id="managerReview"
+                  name="Project Manager Review"
+                  flowable:assignee="${projectManager}"/>
+
+        <sequenceFlow id="flow2"
+                      sourceRef="managerReview"
+                      targetRef="approvalGateway"/>
+
+        <!-- Approval Gateway -->
+        <exclusiveGateway id="approvalGateway"
+                          name="Project Approved?"/>
+
+        <sequenceFlow id="approvedFlow"
+                      sourceRef="approvalGateway"
+                      targetRef="teamAssignment">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${approved == true}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="rejectedFlow"
+                      sourceRef="approvalGateway"
+                      targetRef="projectRevision">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${approved == false}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- Revision -->
+        <userTask id="projectRevision"
+                  name="Project Revision"
+                  flowable:assignee="${projectManager}"/>
+
+        <sequenceFlow id="flow3"
+                      sourceRef="projectRevision"
+                      targetRef="managerReview"/>
+
+        <!-- Team Assignment -->
+        <userTask id="teamAssignment"
+                  name="Team Lead Assignment"
+                  flowable:assignee="${teamLead}"/>
+
+        <sequenceFlow id="flow4"
+                      sourceRef="teamAssignment"
+                      targetRef="development"/>
+
+        <!-- Development -->
+        <userTask id="development"
+                  name="Development and Progress Update"
+                  flowable:assignee="${developer}"/>
+
+        <sequenceFlow id="flow5"
+                      sourceRef="development"
+                      targetRef="developmentGateway"/>
+
+        <!-- Development Gateway -->
+        <exclusiveGateway id="developmentGateway"
+                          name="Development Complete?"/>
+
+        <sequenceFlow id="developmentCompleteFlow"
+                      sourceRef="developmentGateway"
+                      targetRef="qaTesting">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${developmentComplete == true}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="developmentPendingFlow"
+                      sourceRef="developmentGateway"
+                      targetRef="development">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${developmentComplete == false}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- QA Testing -->
+        <userTask id="qaTesting"
+                  name="QA Testing"
+                  flowable:assignee="${qaTester}"/>
+
+        <sequenceFlow id="flow6"
+                      sourceRef="qaTesting"
+                      targetRef="testingGateway"/>
+
+        <!-- Testing Gateway -->
+        <exclusiveGateway id="testingGateway"
+                          name="Testing Passed?"/>
+
+        <sequenceFlow id="testingPassedFlow"
+                      sourceRef="testingGateway"
+                      targetRef="projectCompleted">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${testingPassed == true}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow id="testingFailedFlow"
+                      sourceRef="testingGateway"
+                      targetRef="development">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${testingPassed == false}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- End -->
+        <endEvent id="projectCompleted"
+                  name="Project Completed"/>
+
+        <sequenceFlow id="flow7"
+                      sourceRef="projectCompleted"
+                      targetRef="endProject"/>
+
+        <endEvent id="endProject"
+                  name="End"/>
+
+    </process>
+</definitions>
